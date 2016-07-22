@@ -55,3 +55,30 @@ Public Class RedisInstance
     End Sub
 
 End Class
+
+//Example of Calling above methods
+
+
+  If Not ri.CheckRedisKey(keyRedis) Then
+            dt = DatabaseClasses.DatabaseConnect.GetDataTable("Items_SimpleSearch_ALL", paramrry)
+            serializedString = ri.Serialize(dt)
+            ri.SetKey(keyRedis, serializedString)
+            dt = FilterDataTableRow(dt, startRowIndex, endRowIndex)
+        Else
+            serializedString = ri.GetKey(keyRedis)
+            deserializedObject = ri.Deserialize(Of String)(serializedString)
+            dt = ri.Deserialize(Of DataTable)(deserializedObject)
+            filterTable = dt.Clone()
+            Dim dt1 As DataRow() = dt.Select("ShortDesc Like '%" & SearchString & "%' OR LongDesc Like '%" & SearchString & "%' OR ItemName Like '%" & SearchString & "%'  OR ItemNumber Like '%" & SearchString & "%' OR ManufacturerPartNumber Like '%" & SearchString & "%' OR Keywords Like '%" & SearchString & "%'")
+            For Each dr As DataRow In dt1
+                dr("NewRowNo") = i
+                filterTable.Rows.Add(dr.ItemArray)
+                i = i + 1
+            Next
+
+            If filterTable.Rows.Count > 0 Then
+                dt = FilterDataTableRow(filterTable, startRowIndex, endRowIndex)
+            End If
+        End If
+        Return dt
+    End Function
